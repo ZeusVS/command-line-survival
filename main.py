@@ -1,4 +1,5 @@
 import os
+import random
 
 
 class Character():
@@ -28,7 +29,7 @@ class Cell():
         self.hidden = True
     def __str__(self):
         if self.hidden:
-            return "?"
+            return "█"
         else:
             return " "
 
@@ -44,7 +45,7 @@ class Game():
 
     def create_player(self):
         # Create the player character
-        location = [0, 0]
+        location = [random.randint(0, self._width), random.randint(0, self._height)]
         self._player = Character(location)
 
     def create_map(self):
@@ -85,13 +86,15 @@ class Game():
     def update_los(self):
         # Update line of sight after every time the player has moved
         # Vision is the distance of the LOS, hardcoded atm
-        vision = 3
+        vision = 1
         x = self._player.get_location()[0]
         y = self._player.get_location()[1]
-        for diffx in range(-vision, vision):
-            for diffy in range(-vision, vision):
-                if abs(diffx) + abs(diffy) < vision:
-                    self._grid[x + diffx][y + diffy].hidden = False
+        for diffx in range(-vision, vision + 1):
+            for diffy in range(-vision, vision + 1):
+                if abs(diffx) + abs(diffy) <= vision:
+                    if 0 <= x + diffx <= self._width - 1 and \
+                            0 <= y + diffy <= self._height - 1:
+                        self._grid[x + diffx][y + diffy].hidden = False
 
     def draw(self):
         # First clear the screen and then redraw the entire map
