@@ -1,4 +1,5 @@
 import os
+import time
 import random
 
 
@@ -29,9 +30,9 @@ class Cell():
         self.hidden = True
     def __str__(self):
         if self.hidden:
-            return "█"
+            return "██"
         else:
-            return " "
+            return "  "
 
 
 class Game():
@@ -45,7 +46,9 @@ class Game():
 
     def create_player(self):
         # Create the player character
-        location = [random.randint(0, self._width), random.randint(0, self._height)]
+        x = random.randint(0, self._width - 1)
+        y = random.randint(0, self._height - 1)
+        location = [x, y]
         self._player = Character(location)
 
     def create_map(self):
@@ -97,33 +100,59 @@ class Game():
                         self._grid[x + diffx][y + diffy].hidden = False
 
     def draw(self):
+        # Using escape codes to give color to the different parts
+        red = "\033[31m"
+        blue = "\033[34m"
+        reset = "\033[0m"
         # First clear the screen and then redraw the entire map
-        os.system('cls||clear')
-        print("Command Line Survival".center(self._width))
-        print()
+        # Had to use to escape code shenanigans because clr caused too much flickering
+        # Go up one line and delete whole line to clear the input text
+        print('\033[A', end="")
+        print('\033[J', end="")
+        # Put cursor at the home position to start overwriting everyting
+        print('\033[H', end="")
+
+        # We put everything in one big string and then print the entire screen at once
+        # This prevents some weirdness happening when giving an input between prints
+        toprint = ""
+        # Print title of the game
+        toprint += "Command Line Survival".center((self._width + 2) * 2) + "\n\n"
+        # Print upper border
+        toprint += f"{red}▒▒{reset}" * (self._width + 2) + "\n"
+        # Print main game area
         for y in range(self._height):
             for x in range(self._width):
+                # Print left border
+                if x == 0:
+                    toprint += f"{red}▒▒{reset}"
                 # If the current cell is the location of the player, print *
                 if self._player.get_location() == [x, y]:
-                    print("*", end="")
+                    toprint += f"{blue}☻ {reset}"
                 else:
-                    print(self._grid[x][y], end="")
-            print()
+                    toprint += str(self._grid[x][y])
+            # Print right border
+            toprint += f"{red}▒▒{reset}" + "\n"
+        # Print lower border
+        toprint += f"{red}▒▒{reset}" * (self._width + 2)
         # Print player stats
-        print()
-        print("Player")
-        print(f"Health: {self._player.get_health()}")
-        print()
+        toprint += "\n\n"
+        toprint += "Player\n"
+        toprint += f"Health: {self._player.get_health()}"
+        toprint += "\n\n"
+        print(toprint, end="")
 
 
 def main():
+    # Clear the screen at start
+    os.system('cls||clear')
     # Initialise the game
-    game = Game(width = 80, height = 35)
+    game = Game(width = 50, height = 35)
     # Main game loop
     while True:
         game.draw()
         direction = input("Move North, East, South or West?\n(q to exit game)\n").lower()
         if direction == "q":
+            print("Thanks for playing!")
             break
         try:
             game.move_player(direction)
