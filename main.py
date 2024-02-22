@@ -26,14 +26,27 @@ class Character():
 
 class Cell():
     def __init__(self):
-        self._type = "empty"
         self.hidden = True
-    def __str__(self):
+    def draw(self):
         if self.hidden:
             return "██"
         else:
-            return "  "
+            return self.symbol()
+    def symbol(self):
+        pass
 
+
+class Empty(Cell):
+    def symbol(self):
+        return "  "
+
+class Monster(Cell):
+    def symbol(self):
+        return "\033[31m☻ \033[0m"
+
+class Health(Cell):
+    def symbol(self):
+        return "\033[32m✚ \033[0m"
 
 class Game():
     def __init__(self, width, height):
@@ -45,20 +58,25 @@ class Game():
         self.update_los()
 
     def create_player(self):
-        # Create the player character
+        # Create the player character at random location
         x = random.randint(0, self._width - 1)
         y = random.randint(0, self._height - 1)
         location = [x, y]
         self._player = Character(location)
+        # Make sure the square under the player is an empty cell
+        self._grid[x][y] = Empty()
 
     def create_map(self):
+        # All possible tiles
+        tiles = (Empty, Monster, Health)
+        weights = (75, 20, 5)
         # Create the map of the game as a grid
         # Every element of the grid is a Cell object
         self._grid = []
         for x in range(self._width):
             self._grid.append([])
             for y in range(self._height):
-                cell = Cell()
+                cell = random.choices(tiles, weights, k=1)[0]()
                 self._grid[x].append(cell)
     
     def move_player(self, direction):
@@ -116,7 +134,7 @@ class Game():
         # This prevents some weirdness happening when giving an input between prints
         toprint = ""
         # Print title of the game
-        toprint += "Command Line Survival".center((self._width + 2) * 2) + "\n\n"
+        toprint += f"{red}Command Line Survival{reset}".center((self._width + 2) * 2) + "\n\n"
         # Print upper border
         toprint += f"{red}▒▒{reset}" * (self._width + 2) + "\n"
         # Print main game area
@@ -129,7 +147,7 @@ class Game():
                 if self._player.get_location() == [x, y]:
                     toprint += f"{blue}☻ {reset}"
                 else:
-                    toprint += str(self._grid[x][y])
+                    toprint += self._grid[x][y].draw()
             # Print right border
             toprint += f"{red}▒▒{reset}" + "\n"
         # Print lower border
