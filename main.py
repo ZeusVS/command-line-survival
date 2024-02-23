@@ -1,7 +1,22 @@
+from pynput import keyboard
+import pywinctl as pwc
 import os
 import time
 import random
 
+# Get the active window at startup (should be the terminal that runs the game)
+terminal = pwc.getActiveWindow()
+
+def on_press(key):
+    # Only detect keypresses when the active window is equal to the game window
+    if pwc.getActiveWindow() == terminal:
+        global user_input
+        try:
+            k = key.char 
+        except:
+            k = key.name
+        user_input = k
+        return False
 
 class Character():
     def __init__(self, location):
@@ -82,19 +97,19 @@ class Game():
     def move_player(self, direction):
         location = self._player.get_location()
 
-        if direction in ["n", "north"]:
+        if direction == "Up":
             if location[1] == 0:
                 raise Exception("Out of bounds")
             location[1] -= 1
-        elif direction in ["s", "south"]:
+        elif direction == "Down":
             if location[1] == self._height - 1:
                 raise Exception("Out of bounds")
             location[1] += 1
-        elif direction in ["e", "east"]:
+        elif direction == "Right":
             if location[0] == self._width - 1:
                 raise Exception("Out of bounds")
             location[0] += 1
-        elif direction in ["w", "west"]:
+        elif direction == "Left":
             if location[0] == 0:
                 raise Exception("Out of bounds")
             location[0] -= 1
@@ -168,13 +183,21 @@ def main():
     # Main game loop
     while True:
         game.draw()
-        direction = input("Move North, East, South or West?\n(q to exit game)\n").lower()
-        if direction == "q":
-            print("Thanks for playing!")
-            break
+
         try:
-            game.move_player(direction)
-        except Exception as e:
+            with keyboard.Listener(on_press=on_press) as listener:
+                listener.join()
+            if user_input in ["a", "h"]:
+                game.move_player("Left")
+            if user_input in ["w", "k"]:
+                game.move_player("Up")
+            if user_input in ["s", "j"]:
+                game.move_player("Down")
+            if user_input in ["d", "l"]:
+                game.move_player("Right")
+            if user_input == "q":
+                break
+        except:
             continue
 
 if __name__=="__main__":
